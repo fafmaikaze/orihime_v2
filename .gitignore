@@ -82,6 +82,3 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
-
-# Node Module
-node_modules/
