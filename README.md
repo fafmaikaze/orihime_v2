@@ -9,6 +9,7 @@ It demonstrates how to use casperjs
 - nodejs
 - yarn
 - phantomjs
+- python 2.x
 - casperjs
 
 phantomjs & casperjs can be installed by:
