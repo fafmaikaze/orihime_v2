@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "sqlite3": "^4.0.6",
     "underscore": "^1.9.1"
   }
 }
