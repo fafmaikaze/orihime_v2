@@ -3,6 +3,8 @@ var fs = require('fs');
 var g_task_list = [];
 var g_dmhy_url = 'http://share.dmhy.org';
 var g_persistent_time = 600 * 1000; // main thread will wait XXX ms
+var jsonOutputFile = "myjsonfile.json";
+
 
 function call_cb(callback, scope, args) {
 	if (typeof(callback) === 'function') {
@@ -42,6 +44,46 @@ function get_main_page(url, callback, scope) {
 	c.run();
 }
 
+function get_pages(url, callback, scope){
+	var c = init_casperjs_instance()
+	var base_url = g_dmhy_url;
+
+	c.start(url, function() {
+		var ret = [];
+
+		//get post article time
+		post_time_html = this.getElementsInfo('span[style="display: none;"]');
+		//get article title and article link
+		title_html = this.getElementsInfo('a[href*="topics/view"]');
+		//get torrent path
+		torrent_html = this.getElementsInfo('a[title="磁力下載"]');
+		// console.log(require('utils').dump(main_page));
+
+		for(var i=0;i<post_time_html.length;i++){
+			ret.push({
+				post_time: post_time_html[i].text.trim(),
+				article_title: title_html[i].text.trim(),
+				article_link: base_url + title_html[i].attributes.href,
+				torrent_link: torrent_html[i].attributes.href
+			});
+		}		
+		// console.log(require('utils').dump(ret));
+		call_cb(callback, scope, [ret]);
+		this.wait(g_persistent_time);
+	});
+	c.run();
+}
+
+function writeJsonToFile(json){
+	// fs.writeFile('myjsonfile.json', json, 'utf8', function(err) {
+	// 	if (err) throw err;
+	// 	console.log('Write to File complete');
+	// });
+
+	fs.write(jsonOutputFile, json, 'w');
+}
+
+
 function torrent_filter(torrents) {
 	var keyword_list_raw = fs.read('filter.txt');
 	var keyword_list = [];
@@ -73,8 +115,9 @@ function torrent_filter(torrents) {
 	console.log(JSON.stringify(keyword_list));
 	
 	return und.filter(torrents, function(torrent) {
-		console.log('test', torrent.title, isPassed(torrent.title));
-		return isPassed(torrent.title);
+		console.log('test', torrent.post_time, ' == ', torrent.article_title);
+		// console.log('test', torrent.article_title, isPassed(torrent.article_title));
+		return isPassed(torrent.article_title);
 	});
 
 }
@@ -118,7 +161,8 @@ function main(args) {
 		});
 	}
 
-	get_main_page(args[0] || 'http://share.dmhy.org/topics/list/sort_id/2', function(data) {
+	get_pages(args[0] || 'http://share.dmhy.org/topics/list/sort_id/2/page1', function(data) {
+		writeJsonToFile(JSON.stringify(data));
 		download_list = torrent_filter(data);
 		download_torrent(get_url_list(download_list));
 	});
