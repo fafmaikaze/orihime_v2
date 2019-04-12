@@ -2,6 +2,7 @@
   "dependencies": {
     "eslint": "^5.16.0",
     "global": "^4.3.2",
+    "lodash": "^4.17.11",
     "sqlite3": "^4.0.6",
     "underscore": "^1.9.1"
   },
