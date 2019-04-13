@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const casperjs = require('casper');
+const casperjs = require('casper'); // eslint-disable-line import/no-unresolved
 const fs = require('fs');
 
 const gTaskList = [];
@@ -25,7 +25,7 @@ function initCasperjsInstance(taskName) {
   return gTaskList[taskName];
 }
 
-function getMainPage(url, callback, scope) {
+function getMainPage(url, callback, scope) { // eslint-disable-line no-unused-vars
   const c = initCasperjsInstance();
   const baseUrl = gDmhyUrl;
 
@@ -50,7 +50,7 @@ function getPages(url, callback, scope) {
   const c = initCasperjsInstance();
   const baseUrl = gDmhyUrl;
 
-  c.start(url, () => {
+  c.start(url, function casperMain() {
     const ret = [];
 
     // get post article time
