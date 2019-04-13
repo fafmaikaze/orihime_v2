@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const casperjs = require('casperjs');
+const casperjs = require('casper');
 const fs = require('fs');
 
 const gTaskList = [];
