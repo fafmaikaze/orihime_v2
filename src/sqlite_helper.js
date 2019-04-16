@@ -5,9 +5,8 @@ var file = '../test.db';
 //new 一個 sqlite 的 database，檔案是 test.db
 // var db = new sqlite3.Database(file);
 
-function initDB() {
+function initDB(db) {
   return new Promise(function(resolve, reject) {
-    var db = new sqlite3.Database(file);
     db.serialize(function() {
       //每次先都DROP TABLE
       db.run(' DROP TABLE IF EXISTS Torrent_Info ');
@@ -16,24 +15,21 @@ function initDB() {
         ' CREATE TABLE IF NOT EXISTS  Torrent_Info (id INTEGER PRIMARY KEY AUTOINCREMENT, article_title TEXT, article_link TEXT, torrent_link TEXT, post_time TEXT) '
       );
     });
-    db.close();
+    resolve(db);
   });
 }
 
 function readFileToJson(path) {
-  return new Promise(function(resolve, reject) {
-    var data = fs.readFileSync(path, 'utf8');
-    var words = JSON.parse(data);
-    console.log('FILE ROW NUMBER: ' + words.length);
-    // console.log(words[0].article_title);
-  });
+  var data = fs.readFileSync(path, 'utf8');
+  var words = JSON.parse(data);
+  console.log('FILE ROW NUMBER: ' + words.length);
+  // console.log(words[0].article_title);
+  return words;
 }
 
-function writeFromFile(path) {
+function writeFromFile(data, db) {
   return new Promise(function(resolve, reject) {
     //讀檔
-    var data = readFileToJson(path);
-    var db = new sqlite3.Database(file);
     db.serialize(function() {
       var stmt = db.prepare('INSERT INTO Torrent_Info (article_title, article_link, torrent_link, post_time)  VALUES (?,?,?,?)');
       //寫進資料
@@ -48,13 +44,12 @@ function writeFromFile(path) {
       }
       stmt.finalize();
     });
-    db.close();
+    resolve(db);
   });
 }
 
-function read() {
+function read(db) {
   return new Promise(function(resolve, reject) {
-    var db = new sqlite3.Database(file);
     db.serialize(function() {
       db.each('SELECT * FROM Torrent_Info', function(err, row) {
         // console.log(row);
@@ -63,61 +58,25 @@ function read() {
           console.log(row.id + ': ' + row.post_time + ' = ' + row.article_title);
         }
       });
+      console.log('done read');
     });
-    db.close();
-    console.log('done read');
+    resolve(db);
   });
 }
-// readFileToJson('./test.json');
-// writeFromFile('./test.json');
-const promise = new Promise((resolve, reject) => {
-  console.log('LET S GO');
-  resolve("WORKS");
-  reject("NONO");
-});
-// var result;
-promise
-  .then(() => {
-    setTimeout(function() {
-      initDB();
-    }, 1000);
 
-  })
-  .then(() => {
-    setTimeout(function() {
-      console.log('S 1st')
-    }, 1000);
+const promise = function(db) {
+  return new Promise((resolve, reject) => {
+    resolve(db);
+  });
+};
+const db = new sqlite3.Database(file);
 
-  })
-  .then(() => {
-    setTimeout(function() {
-      read()
-    }, 1000);
-  })
-  .then(
-    () => {
-      setTimeout(function() {
-        writeFromFile('../test.json')
-      }, 1000);
-    }
-  )
-  .then(() => {
-    setTimeout(function() {
-      console.log('S 2nd')
-    }, 1000);
-
-  })
-  .then(
-    () => {
-      setTimeout(function() {
-        read()
-      }, 1000);
-
-    }
-  );
-  
-// .then(console.log('E 2nd'))
-// .catch(reject => console.log('error:'))
-
-// initDB()
-// read()
+promise().then(() => {
+  return initDB(db);
+}).then(() => {
+  return read(db);
+}).then(() => {
+  return writeFromFile(readFileToJson('../test.json'), db);;
+}).then(() => {
+  return read(db);
+})
