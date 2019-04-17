@@ -1,9 +1,6 @@
 var fs = require('fs');
 var sqlite3 = require('sqlite3').verbose();
-
 var file = '../test.db';
-//new 一個 sqlite 的 database，檔案是 test.db
-// var db = new sqlite3.Database(file);
 
 function initDB(db) {
   return new Promise(function(resolve, reject) {
@@ -22,12 +19,10 @@ function initDB(db) {
 function readFileToJson(path) {
   var data = fs.readFileSync(path, 'utf8');
   var words = JSON.parse(data);
-  console.log('FILE ROW NUMBER: ' + words.length);
-  // console.log(words[0].article_title);
   return words;
 }
 
-function writeFromFile(data, db) {
+function writeFromJson(data, db) {
   return new Promise(function(resolve, reject) {
     //讀檔
     db.serialize(function() {
@@ -53,13 +48,18 @@ function read(db) {
     db.serialize(function() {
       db.each('SELECT * FROM Torrent_Info', function(err, row) {
         // console.log(row);
-        //log 出所有的資料
         if (row !== undefined) {
           console.log(row.id + ': ' + row.post_time + ' = ' + row.article_title);
         }
       });
-      console.log('done read');
     });
+    resolve(db);
+  });
+}
+
+function close(db) {
+  return new Promise(function(resolve, reject) {
+    db.close;
     resolve(db);
   });
 }
@@ -76,7 +76,9 @@ promise().then(() => {
 }).then(() => {
   return read(db);
 }).then(() => {
-  return writeFromFile(readFileToJson('../test.json'), db);;
+  return writeFromJson(readFileToJson('../test.json'), db);;
 }).then(() => {
   return read(db);
+}).then(() => {
+  return close(db);
 })
